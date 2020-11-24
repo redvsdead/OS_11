@@ -16,9 +16,7 @@ namespace OS_11
         private static string MakePath(string path)
         {
             return Path.Combine(path, "*");
-        }
-
-        static long size = 0;
+        }             
 
         //возвращает список файлов или каталогов, находящихся по заданному пути 
         private static IEnumerable<WIN32_FIND_DATA> GetInternal(string path, bool isGetDirs)
@@ -32,13 +30,7 @@ namespace OS_11
                 do
                     if (isGetDirs ? (findData.dwFileAttributes & FileAttributes.Directory) != 0
                     : (findData.dwFileAttributes & FileAttributes.Directory) == 0)
-                    {
-                        if (!isGetDirs)
-                        {
-                            size += (findData.nFileSizeHigh * (1 + (long)MAXWORD)) + findData.nFileSizeLow;
-                        }
                         yield return findData;
-                    }
                 while (FindNextFile(findHandle, out findData));
             }
             finally
@@ -78,29 +70,26 @@ namespace OS_11
         //считаем общий объем файлов
         public static long countSize(string path)
         {
-            //long 
-            size = 0;
+            long size = 0;
             //для файлов, лежащих в исходной директории
-            //size += 
-            countDirSize(path);
+            size += countDirSize(path);
             IEnumerable<string> dirs = GetAllDirectories(path);
             //для всех файлов во внутренних директориях
             foreach (var dir in dirs)
             {
-                //size += 
-                countDirSize(dir);                                                                                                                                                                         
+                size += countDirSize(dir);                                                                                                                                                                         
             }
             return size;
         }
 
         //считаем суммарный размер файлов в текущей директории без учета внутренних директорий
-        static long countDirSize(string path)
+        public static long countDirSize(string path)
         {
-            //long size = 0;
+            long size = 0;
             IEnumerable<WIN32_FIND_DATA> files = GetInternal(path, false);
-            foreach (var file in files)
+            foreach (var file in GetInternal(path, false))
             {
-                //size += (file.nFileSizeHigh * (1 + (long)MAXWORD)) + file.nFileSizeLow;
+                size += (file.nFileSizeHigh * (1 + (long)MAXWORD)) + file.nFileSizeLow;
             }
             return size;
         }
